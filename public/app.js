@@ -58,7 +58,31 @@ const state = {
   year: '2025',
   mode: null,
   loading: false,
-  selectedRow: null
+  selectedRow: null,
+  detailView: 'table'
+};
+
+const fieldLabels = {
+  kodeindikator: 'Kode indikator',
+  uraian_indikator: 'Uraian indikator',
+  satuan: 'Satuan',
+  kodepemda: 'Kode pemda',
+  kodekec: 'Kode kecamatan',
+  tahun: 'Tahun',
+  data: 'Nilai data',
+  bidangurusan: 'Bidang urusan',
+  uraibidang: 'Uraian bidang',
+  definisi_operasional: 'Definisi operasional',
+  status: 'Status',
+  status_verifikasi_walidata: 'Verifikasi walidata',
+  status_verifikasi_pembinadata: 'Verifikasi pembina data',
+  catatan_verifikasi_walidata: 'Catatan verifikasi walidata',
+  catatan_verifikasi_pembinadata: 'Catatan verifikasi pembina data',
+  walidata: 'Walidata',
+  lastupdate: 'Terakhir diperbarui',
+  idtransaksi: 'ID transaksi',
+  rownum: 'Nomor baris',
+  rowtotal: 'Total baris'
 };
 
 const elements = {
@@ -103,6 +127,10 @@ const elements = {
   detailTitle: document.getElementById('detailTitle'),
   detailSummary: document.getElementById('detailSummary'),
   detailJson: document.getElementById('detailJson'),
+  detailTableWrap: document.getElementById('detailTableWrap'),
+  detailTableBody: document.getElementById('detailTableBody'),
+  viewTableBtn: document.getElementById('viewTableBtn'),
+  viewJsonBtn: document.getElementById('viewJsonBtn'),
   copyJson: document.getElementById('copyJson'),
   toast: document.getElementById('toast')
 };
@@ -154,6 +182,89 @@ function verificationBadge(value) {
     return '<span class="badge warning">Perlu ditinjau</span>';
   }
   return '<span class="badge neutral">Belum ada status</span>';
+}
+
+function humanizeKey(key) {
+  if (fieldLabels[key]) return fieldLabels[key];
+  return String(key)
+    .replace(/[_.]+/g, ' ')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/^./, (character) => character.toUpperCase());
+}
+
+function flattenRecord(value, prefix = '', output = []) {
+  Object.entries(value ?? {}).forEach(([key, item]) => {
+    const path = prefix ? `${prefix}.${key}` : key;
+    if (item && typeof item === 'object' && !Array.isArray(item)) {
+      if (Object.keys(item).length) {
+        flattenRecord(item, path, output);
+        return;
+      }
+      output.push([path, null]);
+      return;
+    }
+    if (Array.isArray(item)) {
+      if (item.every((entry) => entry === null || typeof entry !== 'object')) {
+        output.push([path, item.length ? item.join(', ') : null]);
+        return;
+      }
+      item.forEach((entry, index) => {
+        if (entry && typeof entry === 'object') flattenRecord(entry, `${path}[${index + 1}]`, output);
+        else output.push([`${path}[${index + 1}]`, entry]);
+      });
+      return;
+    }
+    output.push([path, item]);
+  });
+  return output;
+}
+
+function renderDetailValue(key, value) {
+  if (value === null || value === undefined || value === '') {
+    return '<span class="detail-empty">—</span>';
+  }
+  if (typeof value === 'boolean') {
+    return `<span class="badge ${value ? 'success' : 'neutral'}">${value ? 'Ya' : 'Tidak'}</span>`;
+  }
+  const name = key.split('.').pop();
+  if (name === 'status') return statusBadge(value);
+  if (name.startsWith('status_verifikasi')) return verificationBadge(value);
+  if (name === 'lastupdate' || name.includes('tanggal') || name.includes('_at')) {
+    return `<span class="detail-value">${escapeHtml(formatDate(value))}</span><span class="detail-raw">${escapeHtml(value)}</span>`;
+  }
+  if (name === 'data') {
+    return `<span class="detail-value detail-number">${escapeHtml(formatValue(value))}</span>`;
+  }
+  if (name === 'kodeindikator' || name === 'idtransaksi' || name.startsWith('kode')) {
+    return `<span class="code-cell">${escapeHtml(value)}</span>`;
+  }
+  return `<span class="detail-value">${escapeHtml(value)}</span>`;
+}
+
+function renderDetailTable(row) {
+  const entries = flattenRecord(row);
+  if (!entries.length) {
+    elements.detailTableBody.innerHTML = '<tr><td colspan="2" class="detail-empty">Tidak ada field pada data ini.</td></tr>';
+    return;
+  }
+  elements.detailTableBody.innerHTML = entries.map(([key, value]) => `
+    <tr>
+      <th scope="row"><span class="detail-field">${escapeHtml(humanizeKey(key))}</span><span class="detail-key">${escapeHtml(key)}</span></th>
+      <td>${renderDetailValue(key, value)}</td>
+    </tr>`).join('');
+}
+
+function setDetailView(view) {
+  state.detailView = view;
+  const isTable = view === 'table';
+  elements.detailTableWrap.classList.toggle('hidden', !isTable);
+  elements.detailJson.classList.toggle('hidden', isTable);
+  elements.viewTableBtn.classList.toggle('active', isTable);
+  elements.viewJsonBtn.classList.toggle('active', !isTable);
+  elements.viewTableBtn.setAttribute('aria-selected', String(isTable));
+  elements.viewJsonBtn.setAttribute('aria-selected', String(!isTable));
 }
 
 function indicatorCell(row) {
@@ -342,7 +453,9 @@ function openDetail(row) {
     ['Pembaruan', formatDate(row.lastupdate)]
   ];
   elements.detailSummary.innerHTML = summary.map(([label, value]) => `<div class="detail-item"><span>${escapeHtml(label)}</span><strong title="${escapeHtml(value)}">${escapeHtml(value)}</strong></div>`).join('');
+  renderDetailTable(row);
   elements.detailJson.textContent = JSON.stringify(row, null, 2);
+  setDetailView(state.detailView);
   elements.detailModal.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
   elements.closeModal.focus();
@@ -442,6 +555,8 @@ elements.detailModal.addEventListener('click', (event) => {
   if (event.target === elements.detailModal) closeDetail();
 });
 elements.copyJson.addEventListener('click', copyJson);
+elements.viewTableBtn.addEventListener('click', () => setDetailView('table'));
+elements.viewJsonBtn.addEventListener('click', () => setDetailView('json'));
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape' && !elements.detailModal.classList.contains('hidden')) closeDetail();
   if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
