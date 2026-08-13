@@ -1,0 +1,143 @@
+PANDUAN DEPLOY DASHBOARD SIPD KE VERCEL MELALUI GITHUB
+======================================================
+
+ARSITEKTUR
+----------
+Browser -> domain Vercel -> backend Express/Vercel Function -> API SIPD
+
+Token SIPD disimpan sebagai Environment Variable di Vercel. Token tidak boleh
+berada dalam repository GitHub, file frontend, URL, atau tangkapan layar.
+
+BAGIAN A — SIAPKAN REPOSITORY GITHUB
+------------------------------------
+1. Masuk ke https://github.com/
+2. Klik tombol New repository.
+3. Beri nama, misalnya sipd-dashboard.
+4. Pilih Private karena proyek dipakai untuk internal.
+5. Klik Create repository.
+6. Unggah ISI folder sipd-dashboard, bukan file ZIP-nya.
+
+File/folder yang perlu diunggah:
+- public/
+- server.js
+- package.json
+- package-lock.json
+- .gitignore
+- .vercelignore
+- .env.example
+- README.md
+
+JANGAN unggah:
+- .env
+- node_modules/
+- API key atau kode rahasia lain
+
+Jika memakai fitur upload web GitHub, file yang namanya diawali titik kadang
+tersembunyi di Windows. Pastikan minimal package.json, server.js, dan public/
+terunggah. .env tidak boleh diunggah.
+
+BAGIAN B — IMPOR KE VERCEL
+--------------------------
+1. Masuk ke https://vercel.com/ menggunakan akun GitHub.
+2. Klik Add New -> Project.
+3. Cari repository sipd-dashboard, lalu klik Import.
+4. Framework Preset dapat dibiarkan Other.
+5. Jika package.json berada di root repository, Root Directory dibiarkan ./.
+6. Jangan menambahkan Build Command atau Output Directory.
+7. Sebelum menekan Deploy, buka Environment Variables.
+
+Untuk percobaan aman, tambahkan:
+
+   DEMO_MODE = true
+
+8. Klik Deploy.
+9. Setelah selesai, buka alamat yang diberikan Vercel.
+10. Pastikan dashboard tampil dan label di kanan atas menunjukkan Demo.
+
+BAGIAN C — SAMBUNGKAN API SIPD ASLI
+-----------------------------------
+1. Masuk ke proyek pada Vercel Dashboard.
+2. Buka Settings -> Environment Variables.
+3. Tambahkan variabel berikut:
+
+   SIPD_BASE_URL = https://sipd.go.id/ewalidata/serv
+   SIPD_API_KEY = token_resmi_anda
+   SIPD_KODEPEMDA = kode_pemda_anda
+   DEMO_MODE = false
+
+4. Pilih environment Production dan Preview sesuai kebutuhan.
+5. Jangan menambahkan PORT atau HOST; keduanya diatur otomatis oleh Vercel.
+6. Klik Save.
+7. Buka Deployments.
+8. Pada deployment terbaru, pilih Redeploy.
+9. Buka kembali website. Label seharusnya menjadi Live.
+
+Perubahan Environment Variables hanya diterapkan pada deployment baru. Karena
+itu, lakukan Redeploy setelah menambah atau mengubah variabel.
+
+BAGIAN D — LINDUNGI WEBSITE INTERNAL
+------------------------------------
+Jangan biarkan dashboard dengan kredensial SIPD menjadi layanan publik tanpa
+perlindungan. Walaupun token tidak tampil di browser, pengunjung publik dapat
+memanggil backend Anda dan menggunakan kuota/akses API melalui website.
+
+Pilihan yang disarankan:
+1. Buka Project -> Settings -> Deployment Protection.
+2. Aktifkan Vercel Authentication.
+3. Undang pegawai yang berhak sebagai anggota tim Vercel.
+4. Gunakan URL deployment/preview yang dilindungi untuk kebutuhan internal.
+
+Pada paket Hobby, Standard Protection melindungi preview/deployment URLs, tetapi
+domain produksi tetap publik. Perlindungan semua deployment/production dapat
+memerlukan Pro/Enterprise atau add-on. Alternatifnya, tambahkan sistem login
+aplikasi sebelum menggunakan domain produksi.
+
+BAGIAN E — PENGUJIAN
+--------------------
+Halaman visual:
+   https://nama-proyek.vercel.app/
+
+Pemeriksaan backend (hasilnya memang JSON mentah):
+   https://nama-proyek.vercel.app/api/health
+
+Hasil yang diharapkan saat live:
+   {"ok":true,"mode":"live",...}
+
+Setelah itu uji menu Referensi, Hasil entry, dan Data final dari dashboard.
+
+MASALAH YANG MUNGKIN TERJADI
+----------------------------
+1. Deployment berhasil tetapi halaman 404
+   - Pastikan public/index.html tersedia.
+   - Pastikan server.js dan package.json berada di root repository.
+   - Pastikan Root Directory pada Vercel menunjuk folder yang benar.
+
+2. Label masih Demo
+   - Pastikan DEMO_MODE=false tanpa tanda kutip.
+   - Pastikan variabel diaktifkan untuk environment yang sedang dibuka.
+   - Lakukan Redeploy setelah mengubah variabel.
+
+3. Respons 401
+   - API key salah/tidak aktif atau memiliki spasi.
+   - Isi token saja; jangan tambahkan kata Bearer.
+
+4. Respons 403
+   - Token tidak berizin atau API SIPD membatasi alamat IP.
+
+5. Timeout / koneksi SIPD gagal padahal localhost berhasil
+   - Tanyakan kepada pengelola SIPD apakah akses API memakai whitelist IP.
+   - Alamat keluar Vercel dapat berubah. Jika SIPD meminta satu IP tetap,
+     pertimbangkan server/VPS dengan static IP atau fitur egress IP statis.
+
+6. JSON tampil di browser
+   - URL /api/... memang menampilkan JSON untuk mesin.
+   - Untuk tampilan tabel, buka root domain tanpa /api/.
+
+KEAMANAN WAJIB
+--------------
+- Repository GitHub harus Private.
+- Jangan unggah .env.
+- Jangan memakai nama variabel publik seperti NEXT_PUBLIC_* atau VITE_* untuk token.
+- Jangan menaruh token di public/app.js.
+- Aktifkan proteksi akses sebelum membagikan URL kepada pegawai.
+- Putar/ganti token segera apabila pernah terunggah ke GitHub.
