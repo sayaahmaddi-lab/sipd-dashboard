@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Dashboard read-only untuk API SIPD E-Walidata">
+  <title>WaliData — Dashboard SIPD</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" fill="none"><path d="M7 8.5 16 4l9 4.5v10.8L16 28l-9-8.7V8.5Z" stroke="currentColor" stroke-width="2"/><path d="m11 15 3.2 3.2L21.5 11" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div><strong>WaliData</strong><span>SIPD Explorer</span></div>
+      </div>
+
+      <div class="sidebar-section-label">Sumber data</div>
+      <nav class="resource-nav" aria-label="Jenis data">
+        <button class="nav-item active" data-resource="reference" type="button">
+          <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4H20v15H6.5A2.5 2.5 0 0 1 4 16.5v-10Z"/><path d="M4 16.5A2.5 2.5 0 0 1 6.5 14H20M8 8h7"/></svg></span>
+          <span><strong>Referensi</strong><small>Master indikator</small></span>
+        </button>
+        <button class="nav-item" data-resource="entry" type="button">
+          <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 3h14v18H5zM9 8h6M9 12h6M9 16h4"/></svg></span>
+          <span><strong>Hasil entry</strong><small>Data yang diisikan</small></span>
+        </button>
+        <button class="nav-item" data-resource="final" type="button">
+          <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.7 2.8 8.3 7 10 4.2-1.7 7-5.3 7-10V6l-7-3Z"/><path d="m8.5 12 2.2 2.2 4.8-5"/></svg></span>
+          <span><strong>Data final</strong><small>Data terverifikasi</small></span>
+        </button>
+      </nav>
+
+      <div class="security-card">
+        <div class="security-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v2"/></svg></div>
+        <div><strong>Token tetap aman</strong><p>API key hanya dibaca oleh server dan tidak dikirim ke browser.</p></div>
+      </div>
+
+      <div class="sidebar-footer">
+        <span>Dashboard read-only</span>
+        <span class="version">v1.0</span>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <button class="icon-button mobile-menu" id="mobileMenu" type="button" aria-label="Buka navigasi" aria-expanded="false">
+          <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
+        <div class="breadcrumb"><span>SIPD E-Walidata</span><b>/</b><strong id="breadcrumbCurrent">Referensi</strong></div>
+        <div class="connection-status" id="connectionStatus">
+          <span class="status-dot" id="serviceDot"></span>
+          <span id="serviceText">Memeriksa server…</span>
+          <span class="mode-pill" id="modeBadge">—</span>
+        </div>
+      </header>
+
+      <div class="page-wrap">
+        <section class="hero">
+          <div>
+            <div class="eyebrow" id="resourceEyebrow">GET_REF_DSSD</div>
+            <h1 id="resourceTitle">Referensi indikator</h1>
+            <p id="resourceDescription">Telusuri daftar master indikator statistik sektoral, satuan, definisi, dan statusnya.</p>
+          </div>
+          <div class="hero-actions">
+            <button class="button secondary" id="exportBtn" type="button">
+              <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14"/></svg>
+              Ekspor CSV
+            </button>
+            <button class="button primary" id="refreshBtn" type="button">
+              <svg viewBox="0 0 24 24"><path d="M20 6v5h-5M4 18v-5h5M18.3 9A7 7 0 0 0 6.4 6.4L4 11m16 2-2.4 4.6A7 7 0 0 1 5.7 15"/></svg>
+              Segarkan
+            </button>
+          </div>
+        </section>
+
+        <div class="demo-banner hidden" id="demoBanner" role="status">
+          <div class="banner-icon" aria-hidden="true">i</div>
+          <div><strong>Mode demonstrasi aktif</strong><span>Data di bawah adalah simulasi. Isi file <code>.env</code> untuk menghubungkan API SIPD.</span></div>
+        </div>
+
+        <section class="stats-grid" aria-label="Ringkasan data">
+          <article class="stat-card accent-blue">
+            <div class="stat-icon"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM9 8h6M9 12h6M9 16h3"/></svg></div>
+            <div><span>Baris halaman ini</span><strong id="statPage">—</strong><small>hasil dimuat</small></div>
+          </article>
+          <article class="stat-card accent-cyan">
+            <div class="stat-icon"><svg viewBox="0 0 24 24"><path d="M4 19V9m5 10V5m5 14v-7m5 7V3"/></svg></div>
+            <div><span>Total data</span><strong id="statTotal">—</strong><small>dari server</small></div>
+          </article>
+          <article class="stat-card accent-green">
+            <div class="stat-icon"><svg viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.7 2.8 8.3 7 10 4.2-1.7 7-5.3 7-10V6l-7-3Z"/><path d="m8.5 12 2.2 2.2 4.8-5"/></svg></div>
+            <div><span id="verifiedLabel">Status aktif</span><strong id="statVerified">—</strong><small>di halaman ini</small></div>
+          </article>
+          <article class="stat-card accent-violet">
+            <div class="stat-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></div>
+            <div><span>Terakhir dimuat</span><strong class="time-value" id="statUpdated">—</strong><small>waktu lokal</small></div>
+          </article>
+        </section>
+
+        <section class="data-card">
+          <div class="filters">
+            <label class="search-field">
+              <span class="sr-only">Cari di halaman ini</span>
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+              <input id="searchInput" type="search" placeholder="Cari indikator di halaman ini…" autocomplete="off">
+              <kbd>⌘ K</kbd>
+            </label>
+            <label class="filter-field hidden" id="yearGroup">
+              <span>Tahun data</span>
+              <input id="yearInput" type="number" min="2000" max="2100" value="2025" inputmode="numeric">
+            </label>
+            <label class="filter-field limit-field">
+              <span>Per halaman</span>
+              <select id="limitSelect">
+                <option value="10" selected>10 baris</option>
+                <option value="25">25 baris</option>
+                <option value="50">50 baris</option>
+                <option value="100">100 baris</option>
+              </select>
+            </label>
+            <button class="button filter-button" id="applyFilters" type="button">Terapkan</button>
+          </div>
+
+          <div class="error-banner hidden" id="errorBanner" role="alert">
+            <div><strong>Data belum dapat dimuat</strong><span id="errorMessage"></span></div>
+            <button type="button" id="retryBtn">Coba lagi</button>
+          </div>
+
+          <div class="table-meta">
+            <div><strong id="tableCaption">Daftar referensi indikator</strong><span id="resultSummary">Menyiapkan data…</span></div>
+            <span class="readonly-label"><svg viewBox="0 0 24 24"><path d="M3 12s3-5 9-5 9 5 9 5-3 5-9 5-9-5-9-5Z"/><circle cx="12" cy="12" r="2"/></svg> Hanya baca</span>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead id="tableHead"></thead>
+              <tbody id="tableBody"></tbody>
+            </table>
+            <div class="loading-state" id="loadingState" aria-live="polite">
+              <div class="spinner"></div><strong>Mengambil data…</strong><span>Mohon tunggu sebentar.</span>
+            </div>
+            <div class="empty-state hidden" id="emptyState">
+              <div class="empty-icon"><svg viewBox="0 0 24 24"><path d="M4 6h16v13H4zM8 10h8M8 14h5"/></svg></div>
+              <strong>Data tidak ditemukan</strong>
+              <span>Ubah pencarian, tahun, atau halaman lalu coba kembali.</span>
+            </div>
+          </div>
+
+          <div class="pagination">
+            <span id="pageInfo">Halaman 1</span>
+            <div>
+              <button class="page-button" id="prevBtn" type="button" disabled>
+                <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>Sebelumnya
+              </button>
+              <button class="page-button" id="nextBtn" type="button" disabled>
+                Berikutnya<svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <footer class="page-footer">
+          <span>Data bersumber dari API SIPD E-Walidata</span>
+          <span>API key dilindungi oleh backend</span>
+        </footer>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-backdrop hidden" id="detailModal" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+    <div class="modal">
+      <div class="modal-header">
+        <div><span id="detailCode">Detail indikator</span><h2 id="detailTitle">Detail data</h2></div>
+        <button class="icon-button" id="closeModal" type="button" aria-label="Tutup detail"><svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+      </div>
+      <div class="detail-summary" id="detailSummary"></div>
+      <div class="json-heading"><strong>Respons JSON</strong><button type="button" id="copyJson">Salin JSON</button></div>
+      <pre id="detailJson"></pre>
+    </div>
+  </div>
+
+  <div class="toast hidden" id="toast" role="status"></div>
+  <script src="/app.js" defer></script>
+</body>
+</html>
