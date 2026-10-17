@@ -16,7 +16,7 @@ const DEMO_MODE = hasExplicitDemoSetting
 
 const resources = {
   reference: { endpoint: 'get_ref_dssd', year: false },
-  entry: { endpoint: 'get_dssd', year: true },
+  entry: { endpoint: 'get_dssd_final', year: true },
   final: { endpoint: 'get_dssd_final', year: true, requireYear: true }
 };
 

@@ -15,11 +15,11 @@ const resources = {
     ]
   },
   entry: {
-    eyebrow: 'GET_DSSD',
-    nav: 'Hasil entry',
-    title: 'Hasil entry data',
-    description: 'Pantau nilai statistik sektoral yang telah diisikan beserta status verifikasi walidata.',
-    caption: 'Hasil pengisian data sektoral',
+    eyebrow: 'GET_DSSD_FINAL',
+    nav: 'Data final',
+    title: 'Data statistik final',
+    description: 'Lihat data statistik sektoral yang telah mencapai tahap final untuk tahun yang dipilih.',
+    caption: 'Data statistik sektoral final',
     verifiedLabel: 'Terverifikasi',
     columns: [
       { label: 'Indikator', render: indicatorCell },
